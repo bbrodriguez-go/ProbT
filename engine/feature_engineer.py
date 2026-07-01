@@ -131,6 +131,133 @@ def build_last_row_features(
     return fm.iloc[-1]
 
 
+def build(symbol: str, timeframe: str) -> pd.DataFrame:
+    """Read bars.csv + macro.csv, build feature matrix, write to disk."""
+    import data_collector
+
+    symbol    = normalize_symbol(symbol)
+    timeframe = normalize_timeframe(timeframe)
+    bars      = data_collector.load_bars(symbol, timeframe)
+    macro     = (data_collector.load_macro(symbol, timeframe)
+                 if symbol_has_macro(symbol) else None)
+    out       = build_features(bars, timeframe, macro=macro, symbol=symbol)
+
+    path = pair_path(symbol, timeframe, "feature_matrix.csv")
+    out.to_csv(path)
+    print(f"[feature_engineer] {symbol} {timeframe}: {len(out)} rows | "
+          f"{out.index.min().date()} → {out.index.max().date()} | "
+          f"{len(out.columns)} cols")
+    return out
+  
+# ─── Fourier (FFT) cycle features ──────────────────────────────────────────────────────────
+def _fourier_features(
+    close: pd.Series,
+    cycles: list = [8, 20, 29],
+    window: int = 128,
+) -> pd.DataFrame:
+    """
+    Rolling FFT over `window` bars.
+    cycles = list of bar-length periods to analyse (unit = bars).
+    Returns:
+      fft_power_<c>  = normalised spectral power at cycle c
+      fft_phase_<c>  = instantaneous phase in [-pi, pi]
+    """
+    from scipy.fft import rfft, rfftfreq
+
+    prices = close.values.astype(float)
+    n      = len(prices)
+    res    = {f'fft_power_{c}': np.full(n, np.nan) for c in cycles}
+    res.update({f'fft_phase_{c}': np.full(n, np.nan) for c in cycles})
+
+    for i in range(window, n):
+        seg    = prices[i - window : i].copy()
+        trend  = np.linspace(seg[0], seg[-1], window)
+        seg_dt = seg - trend
+
+        F     = rfft(seg_dt)
+        freqs = rfftfreq(window, d=1.0)
+
+        for c in cycles:
+            if c <= 0:
+                continue
+            idx = int(np.argmin(np.abs(freqs - 1.0 / c)))
+            res[f'fft_power_{c}'][i] = float(np.abs(F[idx]) ** 2)
+            res[f'fft_phase_{c}'][i] = float(np.angle(F[idx]))
+
+    df_out = pd.DataFrame(res, index=close.index)
+    for c in cycles:
+        col  = f'fft_power_{c}'
+        roll = df_out[col].rolling(50, min_periods=10).mean()
+        df_out[col] = df_out[col] / (roll + 1e-10)
+    return df_out
+
+# ─── Wavelet (CWT Morlet) features ─────────────────────────────────────────
+def _wavelet_features(
+    close: pd.Series,
+    scales: list = [4, 8, 16, 32],
+) -> pd.DataFrame:
+    """CWT with Morlet wavelet over the full price series."""
+    try:
+        import pywt
+    except ImportError:
+        print('[feature_engineer] pywt not installed, wavelet features skipped')
+        return pd.DataFrame(index=close.index)
+    
+    prices = close.values.astype(float)
+    res = {}
+    coeffs, _ = pywt.cwt(prices, scales, 'morl')
+    
+    for i, scale in enumerate(scales):
+        energy = np.abs(coeffs[i]) ** 2
+        energy_s = pd.Series(energy, index=close.index)
+        roll = energy_s.rolling(100, min_periods=20).mean()
+        res[f'wavelet_energy_s{scale}'] = energy_s / (roll + 1e-10)
+        
+    if len(scales) >= 3:
+        phase_fast = np.angle(coeffs[0])
+        phase_slow = np.angle(coeffs[2])
+        diff = phase_fast - phase_slow
+        res['wavelet_phase_interference'] = pd.Series(
+            (1.0 - np.cos(diff)) / 2.0,
+            index=close.index,
+        )
+    return pd.DataFrame(res, index=close.index)
+
+# ─── Clayton Copula residual (XAUUSD vs DXY) ───────────────────────────────
+def _copula_residual(
+    y_returns: pd.Series,
+    x_returns: pd.Series,
+    window: int = 60,
+) -> pd.Series:
+    from scipy.stats import rankdata as rank, kendalltau
+    y = y_returns.values.astype(float)
+    x = x_returns.values.astype(float)
+    n = len(y)
+    residuals = np.full(n, np.nan)
+    
+    for i in range(window, n):
+        y_w = y[i - window : i]
+        x_w = x[i - window : i]
+        valid = np.isfinite(y_w) & np.isfinite(x_w)
+        if valid.sum() < window // 2:
+            continue
+            
+        y_v, x_v = y_w[valid], x_w[valid]
+        m = len(y_v)
+        uy = rank(y_v) / (m + 1.0)
+        ux = rank(x_v) / (m + 1.0)
+        
+        u_curr = float(np.sum(y_v[:-1] < y_v[-1]) / max(m - 1, 1))
+        v_curr = float(np.sum(x_v[:-1] < x_v[-1]) / max(m - 1, 1))
+        bw = 0.20
+        near_v = np.abs(ux - v_curr) < bw
+        
+        if near_v.sum() >= 5:
+            u_expected = float(uy[near_v].mean())
+            residuals[i] = u_curr - u_expected
+            
+    return pd.Series(residuals, index=y_returns.index)
+
 # ─── core ──────────────────────────────────────────────────────────
 def build_features(
     bars: pd.DataFrame,
@@ -170,20 +297,27 @@ def build_features(
 
     # ─── 2. SMC bias + S/R zones (trailing window per bar) ────────
     smc_bias, zone_dist, at_zone = [], [], []
+    at_demand, at_supply         = [], []
+
     cols = ["open", "high", "low", "close"]
     for i in range(len(bars)):
         if i < 60:
             smc_bias.append(0)
             zone_dist.append(np.nan)
             at_zone.append(0)
+            at_demand.append(0)
+            at_supply.append(0)
             continue
-        start = max(0, i - _SMC_WINDOW)
-        window_df = bars.iloc[start:i + 1][cols]
-        bias = smc.detect_structure(window_df)
+
+        start  = max(0, i - _SMC_WINDOW)
+        win_df = bars.iloc[start : i + 1][cols]
+        bias   = smc.detect_structure(win_df)
         smc_bias.append(indicators.encode_bias(bias))
-        zones = support_resistance.detect_zones(window_df)
+
+        zones = support_resistance.detect_zones(win_df)
         price = float(close.iloc[i])
         atr_i = float(atr_abs.iloc[i]) if pd.notna(atr_abs.iloc[i]) else 0.0
+
         nz = support_resistance.nearest_zone(price, zones)
         if nz and atr_i > 0:
             dist = abs(nz["price"] - price) / atr_i
@@ -192,13 +326,60 @@ def build_features(
         else:
             zone_dist.append(np.nan)
             at_zone.append(0)
-    out[f"smc_bias_{tf_suffix}"] = smc_bias
-    out["zone_dist_atr"] = zone_dist
-    out["at_zone"] = at_zone
 
-    # ─── 3. Macro (gold only) ─────────────────────────────────────
+        if atr_i > 0:
+            nz_bull = support_resistance.nearest_zone(price, zones, kind="support")
+            nz_bear = support_resistance.nearest_zone(price, zones, kind="resistance")
+            d_bull  = abs(nz_bull["price"] - price) / atr_i if nz_bull else np.inf
+            d_bear  = abs(nz_bear["price"] - price) / atr_i if nz_bear else np.inf
+            at_demand.append(1 if d_bull < 0.5 else 0)
+            at_supply.append(1 if d_bear < 0.5 else 0)
+        else:
+            at_demand.append(0)
+            at_supply.append(0)
+
+   out[f"smc_bias_{tf_suffix}"] = smc_bias
+    out["zone_dist_atr"]         = zone_dist
+    out["at_zone"]               = at_zone
+    out["at_demand"]             = at_demand
+    out["at_supply"]             = at_supply
+
+    # ─── Rail 1: Interaction (Cross) Features ──────────────────────
+    tf = tf_suffix
+    out[f"rsi_x_demand"]  = out[f"rsi_{tf}"]       * out["at_demand"]
+    out[f"rsi_x_supply"]  = out[f"rsi_{tf}"]       * out["at_supply"]
+    out[f"macd_x_demand"] = out[f"macd_pct_{tf}"]  * out["at_demand"]
+    out[f"macd_x_supply"] = out[f"macd_pct_{tf}"]  * out["at_supply"]
+    out[f"ema_x_demand"]  = out[f"ema_cross_{tf}"]  * out["at_demand"]
+    out[f"ema_x_supply"]  = out[f"ema_cross_{tf}"]  * out["at_supply"]
+    out[f"atr_x_zone"]    = out[f"atr_pct_{tf}"]   * out["at_zone"]
+  
+    # (Rail 2 ya fue procesado exitosamente dentro del bucle superior)
+
+    # ─── 3. Macro (gold only) ──────────────────────────────────────
     if symbol is None or symbol_has_macro(symbol):
         out = _attach_macro(out, macro)
+
+    # ─── 4. Spectral features (all symbols) ───────────────────────
+    fft_df = _fourier_features(close, cycles=[8, 20, 29], window=128)
+    for col in fft_df.columns:
+        out[col] = fft_df[col].reindex(out.index)
+
+    wvt_df = _wavelet_features(close, scales=[4, 8, 16, 32])
+    for col in wvt_df.columns:
+        out[col] = wvt_df[col].reindex(out.index)
+
+    # ─── 5. Copula residual (XAUUSD only — requires DXY macro) ────
+    if macro is not None and (symbol is None or symbol_has_macro(symbol)):
+        macro_c = _clean_index(macro.copy())
+        if "dxy" in macro_c.columns:
+            dxy_aligned = macro_c["dxy"].reindex(out.index, method="ffill")
+            dxy_ret     = np.log(dxy_aligned / dxy_aligned.shift(1))
+            xau_ret     = np.log(close.reindex(out.index) /
+                                 close.reindex(out.index).shift(1))
+            out["copula_residual_dxy"] = _copula_residual(
+                xau_ret, dxy_ret, window=60
+            )
 
     # Keep OHLC for the labeler, then drop warmup NaNs from indicators
     out["high"] = bars["high"]
@@ -207,25 +388,6 @@ def build_features(
     out = out.dropna()
     out = out[~out.index.duplicated(keep="last")]
     return out
-
-
-def build(symbol: str, timeframe: str) -> pd.DataFrame:
-    """Read bars.csv (+macro.csv if applicable), build features, persist."""
-    import data_collector
-
-    symbol = normalize_symbol(symbol)
-    timeframe = normalize_timeframe(timeframe)
-    bars = data_collector.load_bars(symbol, timeframe)
-    macro = data_collector.load_macro(symbol, timeframe) if symbol_has_macro(symbol) else None
-    out = build_features(bars, timeframe, macro=macro, symbol=symbol)
-
-    path = pair_path(symbol, timeframe, "feature_matrix.csv")
-    out.to_csv(path)
-    print(f"[feature_engineer] {symbol} {timeframe}: {len(out)} rows | "
-          f"{out.index.min().date()} → {out.index.max().date()} | "
-          f"{len(out.columns)} cols")
-    return out
-
 
 # ─── legacy entry point (XAUUSD daily) ────────────────────────────
 def build_legacy():
