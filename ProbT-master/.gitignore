@@ -1,0 +1,66 @@
+# ─── Python ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# ─── Engine generated data ───────────────────────────────────────
+# Ignore LEGACY single-symbol artifacts directly under engine/data/ (large, regenerable).
+engine/data/*.csv
+engine/data/*.pkl
+engine/data/*.json
+engine/data/*.png
+!engine/data/.gitkeep
+!engine/data/*.example.json
+# BUT keep the multi-asset model bundles under engine/data/symbols/ committed:
+# these are the trained models served by the API (small, ~5KB each, baked into the image).
+!engine/data/symbols/
+!engine/data/symbols/**
+
+# ─── Secrets ────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ─── Node / Next.js ─────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
+# ─── Editor / OS ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Google Cloud ───────────────────────────────────
+service-account.json
+gcloud-service-account.json
+*.creds
+
+data/*

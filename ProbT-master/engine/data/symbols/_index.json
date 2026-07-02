@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-06-29T03:00:47Z",
+  "pairs": [
+    {
+      "symbol": "SPX500",
+      "timeframe": "1W",
+      "trained": true,
+      "rows": 5139,
+      "brier": 0.1508,
+      "error": null,
+      "ticker": "^GSPC",
+      "features": 9,
+      "seconds": 56.5
+    }
+  ]
+}

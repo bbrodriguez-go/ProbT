@@ -1,0 +1,115 @@
+name: Deploy Engine (probt-api)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "engine/**"
+      - ".github/workflows/deploy-engine.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-engine
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: us-central1
+  RUNTIME_SA: 354072478643-compute@developer.gserviceaccount.com
+
+jobs:
+  deploy:
+    name: Build & deploy probt-api
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: engine
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Artifact Registry auth
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Resolve image tag
+        id: tag
+        run: echo "image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/probt/engine:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build engine image (Cloud Build)
+        run: |
+          # Submit the build asynchronously and poll for completion. This avoids
+          # `gcloud builds submit` failing on build-log streaming, which requires
+          # project Viewer/Owner access that the WIF SA should not hold.
+          BUILD_ID=$(gcloud builds submit . \
+            --tag=${{ steps.tag.outputs.image }} \
+            --project=${{ env.GCP_PROJECT_ID }} --quiet --async --format="value(id)")
+          echo "Submitted build $BUILD_ID, polling..."
+          for i in $(seq 1 60); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --project=${{ env.GCP_PROJECT_ID }} --format="value(status)")
+            echo "poll $i -> $STATUS"
+            case "$STATUS" in
+              SUCCESS) echo "Build succeeded"; exit 0 ;;
+              FAILURE|CANCELLED|INTERNAL_ERROR|TIMEOUT|EXPIRED)
+                echo "Build failed ($STATUS). Tail of build log:"
+                gcloud builds log "$BUILD_ID" --project=${{ env.GCP_PROJECT_ID }} --last=100 || true
+                exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "Build timed out waiting for $BUILD_ID" && exit 1
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          # Cloud Run caps combined service-name + traffic-tag at 46 chars, so
+          # use the short SHA instead of the full github.sha.
+          TAG="ci-$(echo "${{ github.sha }}" | cut -c1-7)"
+          gcloud run deploy probt-api \
+            --image=${{ steps.tag.outputs.image }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --port=8080 \
+            --allow-unauthenticated \
+            --memory=1Gi --cpu=1 \
+            --min-instances=1 --max-instances=3 \
+            --timeout=300 --no-cpu-boost \
+            --service-account=${{ env.RUNTIME_SA }} \
+            --set-env-vars="GCLOUD_PROJECT=probt-cloud,GCLOUD_LOCATION=us-central1" \
+            --set-secrets="NEWSAPI_KEY=NEWSAPI_KEY:latest" \
+            --no-traffic --tag="$TAG" --quiet
+
+          gcloud run services update-traffic probt-api \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --to-tags="$TAG=100" --quiet
+
+      - name: Capture API URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe probt-api --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format="value(status.url)")
+          echo "api_url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed API: $URL"
+
+      - name: Smoke test /api/health
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            CODE=$(curl -s -o /tmp/h.json -w "%{http_code}" ${{ steps.url.outputs.api_url }}/api/health || echo 000)
+            echo "attempt $i -> HTTP $CODE"
+            if [ "$CODE" = "200" ]; then cat /tmp/h.json; exit 0; fi
+            sleep 5
+          done
+          echo "Health check failed" && exit 1

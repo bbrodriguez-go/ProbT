@@ -1,0 +1,11 @@
+[
+  "rsi_1h",
+  "macd_pct_1h",
+  "ema_cross_1h",
+  "atr_pct_1h",
+  "ret_1",
+  "ret_5",
+  "smc_bias_1h",
+  "zone_dist_atr",
+  "at_zone"
+]

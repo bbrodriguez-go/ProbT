@@ -1,0 +1,32 @@
+{
+  "symbol": "BTCUSD",
+  "timeframe": "1W",
+  "cv_brier_score": 0.2067,
+  "cv_brier_skill_score": 0.1732,
+  "cv_folds": [
+    0.2747,
+    0.2297,
+    0.1186,
+    0.2312,
+    0.1792
+  ],
+  "label_balance": {
+    "0": 0.7314,
+    "1": 0.2686
+  },
+  "n_rows": 551,
+  "n_features": 9,
+  "features": [
+    "rsi_1w",
+    "macd_pct_1w",
+    "ema_cross_1w",
+    "atr_pct_1w",
+    "ret_1",
+    "ret_5",
+    "smc_bias_1w",
+    "zone_dist_atr",
+    "at_zone"
+  ],
+  "c": 0.1,
+  "trained_at": "2026-06-28T21:19:36.046898"
+}

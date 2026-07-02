@@ -1,0 +1,22 @@
+# ─── Engine core (per XAUUSD Probability Engine spec) ──────────────
+yfinance>=0.2.36
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+psutil>=5.9.0
+joblib>=1.3.0
+statsmodels>=0.14.0
+seaborn>=0.12.0
+matplotlib>=3.7.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# ─── Sentiment: Vertex AI Gemini via google-genai unified SDK ──────
+# Uses ADC on Cloud Run, or GEMINI_API_KEY for local dev
+google-genai>=1.0.0
+
+# ─── FastAPI gateway ───────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.0.0

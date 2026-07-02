@@ -1,0 +1,41 @@
+{
+  "bounce": {
+    "coefficients": {
+      "rsi_4h": 0.0,
+      "macd_pct_4h": 0.0,
+      "ema_cross_4h": 0.0,
+      "atr_pct_4h": 0.0,
+      "ret_1": 0.0,
+      "ret_5": 0.0,
+      "smc_bias_4h": 0.0,
+      "zone_dist_atr": 0.07845716013602297,
+      "at_zone": 0.0,
+      "hilbert_inst_freq": 0.0
+    },
+    "sign_flags": []
+  },
+  "break": {
+    "coefficients": {
+      "rsi_4h": 0.0,
+      "macd_pct_4h": 0.02018742948919895,
+      "ema_cross_4h": 0.0,
+      "atr_pct_4h": -0.12257831402045752,
+      "ret_1": -0.13873254474153185,
+      "ret_5": 0.01516704097553016,
+      "smc_bias_4h": 0.07048026123869601,
+      "zone_dist_atr": 0.0,
+      "at_zone": -0.0625450051177531,
+      "zone_delta_pct": 0.0,
+      "zone_age_bars": 0.0,
+      "zone_touches": 0.18240787791909022,
+      "zone_width_atr": 0.0,
+      "zone_confluence_count": -0.017651949488804417,
+      "htf_alignment": -0.04529483143472657,
+      "distance_from_poc_atr": 0.0,
+      "volume_delta_since_zone": 0.028629401003202177,
+      "q6_harmonic_oscillator_energy": 0.0,
+      "break_target_dist_atr": -0.9399218551208878
+    },
+    "sign_flags": []
+  }
+}

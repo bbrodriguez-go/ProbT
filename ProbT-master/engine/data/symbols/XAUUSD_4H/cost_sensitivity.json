@@ -1,0 +1,30 @@
+{
+  "bounce": {
+    "spread_atr": 0.04,
+    "slippage_atr": 0.02,
+    "stop_atr": 1.0,
+    "cost_r_per_trade": 0.06,
+    "no_costs": {
+      "n_trades": 0,
+      "note": "fewer than 10 EV+ trades"
+    },
+    "with_costs": {
+      "n_trades": 0,
+      "note": "fewer than 10 EV+ trades"
+    }
+  },
+  "break": {
+    "spread_atr": 0.04,
+    "slippage_atr": 0.02,
+    "stop_atr": 2.0,
+    "cost_r_per_trade": 0.03,
+    "no_costs": {
+      "n_trades": 1,
+      "note": "fewer than 10 EV+ trades"
+    },
+    "with_costs": {
+      "n_trades": 1,
+      "note": "fewer than 10 EV+ trades"
+    }
+  }
+}

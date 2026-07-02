@@ -1,0 +1,118 @@
+name: Deploy Web (probt-web)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: us-central1
+
+jobs:
+  deploy:
+    name: Build & deploy probt-web
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Resolve API URL dynamically (no hardcoding)
+        id: api
+        run: |
+          API_URL=$(gcloud run services describe probt-api \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.url)")
+          WS_URL="${API_URL/https:/wss:}/ws/stream"
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          echo "ws_url=$WS_URL"   >> $GITHUB_OUTPUT
+          echo "Resolved API: $API_URL"
+          echo "Resolved WS : $WS_URL"
+
+      - name: Resolve image tag
+        id: tag
+        run: echo "image=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/probt/web:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build web image via cloudbuild.yaml (Cloud Build)
+        run: |
+          # Submit asynchronously + poll. Avoids `gcloud builds submit` failing
+          # on build-log streaming (needs project Viewer/Owner the WIF SA lacks).
+          BUILD_ID=$(gcloud builds submit ./web \
+            --config=./web/cloudbuild.yaml \
+            --substitutions=_API_URL=${{ steps.api.outputs.api_url }},_WS_URL=${{ steps.api.outputs.ws_url }},_IMAGE=${{ steps.tag.outputs.image }} \
+            --project=${{ env.GCP_PROJECT_ID }} --quiet --async --format="value(id)")
+          echo "Submitted build $BUILD_ID, polling..."
+          for i in $(seq 1 60); do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --project=${{ env.GCP_PROJECT_ID }} --format="value(status)")
+            echo "poll $i -> $STATUS"
+            case "$STATUS" in
+              SUCCESS) echo "Build succeeded"; exit 0 ;;
+              FAILURE|CANCELLED|INTERNAL_ERROR|TIMEOUT|EXPIRED)
+                echo "Build failed ($STATUS). Tail of build log:"
+                gcloud builds log "$BUILD_ID" --project=${{ env.GCP_PROJECT_ID }} --last=100 || true
+                exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "Build timed out waiting for $BUILD_ID" && exit 1
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          # Cloud Run caps combined service-name + traffic-tag at 46 chars, so
+          # use the short SHA instead of the full github.sha.
+          TAG="ci-$(echo "${{ github.sha }}" | cut -c1-7)"
+          gcloud run deploy probt-web \
+            --image=${{ steps.tag.outputs.image }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --port=3000 \
+            --allow-unauthenticated \
+            --memory=512Mi --cpu=1 \
+            --min-instances=1 --max-instances=3 \
+            --timeout=60 --cpu-boost \
+            --no-traffic --tag="$TAG" --quiet
+
+          gcloud run services update-traffic probt-web \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --to-tags="$TAG=100" --quiet
+
+      - name: Capture Web URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe probt-web --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format="value(status.url)")
+          echo "web_url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed Web: $URL"
+
+      - name: Smoke test web root
+        run: |
+          for i in 1 2 3 4 5 6; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.url.outputs.web_url }}/ || echo 000)
+            echo "attempt $i -> HTTP $CODE"
+            if [ "$CODE" = "200" ]; then exit 0; fi
+            sleep 5
+          done
+          echo "Web smoke check failed" && exit 1

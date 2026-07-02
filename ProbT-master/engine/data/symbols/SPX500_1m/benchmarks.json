@@ -1,0 +1,47 @@
+[
+  {
+    "name": "XGBoost",
+    "type": "XGBClassifier",
+    "accuracy": 0.1942,
+    "confidence": 0.7741,
+    "status": "benchmark",
+    "brier": 0.2259,
+    "train_time": 0.02
+  },
+  {
+    "name": "RandomForest",
+    "type": "RandomForestClassifier",
+    "accuracy": 0.2667,
+    "confidence": 0.7901,
+    "status": "benchmark",
+    "brier": 0.2099,
+    "train_time": 0.2
+  },
+  {
+    "name": "GradientBoost",
+    "type": "GradientBoostingClassifier",
+    "accuracy": 0.273,
+    "confidence": 0.7662,
+    "status": "benchmark",
+    "brier": 0.2338,
+    "train_time": 0.35
+  },
+  {
+    "name": "AdaBoost",
+    "type": "AdaBoostClassifier",
+    "accuracy": 0.0,
+    "confidence": 0.7945,
+    "status": "benchmark",
+    "brier": 0.2055,
+    "train_time": 0.11
+  },
+  {
+    "name": "Bayesian",
+    "type": "GaussianNB",
+    "accuracy": 0.3729,
+    "confidence": 0.75,
+    "status": "benchmark",
+    "brier": 0.25,
+    "train_time": 0.0
+  }
+]

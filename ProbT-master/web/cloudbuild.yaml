@@ -1,0 +1,23 @@
+# Builds the probt-web Docker image.
+# `_API_URL` and `_WS_URL` are injected by GitHub Actions (deploy-web.yml)
+# as substitutions, derived dynamically from the live probt-api Cloud Run URL.
+# No hardcoded project numbers — the engine URL is resolved at deploy time.
+substitutions:
+  _API_URL: 'https://probt-api-ihjommfejq-uc.a.run.app'
+  _WS_URL: 'wss://probt-api-ihjommfejq-uc.a.run.app/ws/stream'
+  _IMAGE: 'us-central1-docker.pkg.dev/probt-cloud/probt/web:latest'
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'API_URL=${_API_URL}'
+      - '--build-arg'
+      - 'WS_URL=${_WS_URL}'
+      - '-t'
+      - '${_IMAGE}'
+      - '.'
+images:
+  - '${_IMAGE}'
+options:
+  logging: CLOUD_LOGGING_ONLY

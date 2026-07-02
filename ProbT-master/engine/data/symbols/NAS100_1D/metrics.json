@@ -1,0 +1,32 @@
+{
+  "symbol": "NAS100",
+  "timeframe": "1D",
+  "cv_brier_score": 0.2203,
+  "cv_brier_skill_score": 0.1186,
+  "cv_folds": [
+    0.2342,
+    0.2114,
+    0.2149,
+    0.219,
+    0.2223
+  ],
+  "label_balance": {
+    "0": 0.6685,
+    "1": 0.3315
+  },
+  "n_rows": 10193,
+  "n_features": 9,
+  "features": [
+    "rsi_1d",
+    "macd_pct_1d",
+    "ema_cross_1d",
+    "atr_pct_1d",
+    "ret_1",
+    "ret_5",
+    "smc_bias_1d",
+    "zone_dist_atr",
+    "at_zone"
+  ],
+  "c": 0.1,
+  "trained_at": "2026-06-28T21:33:52.889140"
+}

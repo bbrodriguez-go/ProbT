@@ -1,0 +1,4 @@
+{
+  "note": "Hand-maintained central-bank decision calendar (master prompt section 6 D4). Add one entry per upcoming FOMC/ECB decision: name + decision time in UTC ISO-8601. live_engine_v2 suppresses readings from 24h before to 1h after each entry. Empty list = no blackouts (verify and fill in real dates before trusting live readings around decisions).",
+  "events": []
+}

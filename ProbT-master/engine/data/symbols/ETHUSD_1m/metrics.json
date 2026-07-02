@@ -1,0 +1,32 @@
+{
+  "symbol": "ETHUSD",
+  "timeframe": "1m",
+  "cv_brier_score": 0.2125,
+  "cv_brier_skill_score": 0.15,
+  "cv_folds": [
+    0.195,
+    0.2023,
+    0.2117,
+    0.2264,
+    0.227
+  ],
+  "label_balance": {
+    "0": 0.707,
+    "1": 0.293
+  },
+  "n_rows": 8704,
+  "n_features": 9,
+  "features": [
+    "rsi_1m",
+    "macd_pct_1m",
+    "ema_cross_1m",
+    "atr_pct_1m",
+    "ret_1",
+    "ret_5",
+    "smc_bias_1m",
+    "zone_dist_atr",
+    "at_zone"
+  ],
+  "c": 0.1,
+  "trained_at": "2026-06-28T21:21:00.526171"
+}

@@ -1,0 +1,35 @@
+{
+  "bounce": [
+    "rsi_4h",
+    "macd_pct_4h",
+    "ema_cross_4h",
+    "atr_pct_4h",
+    "ret_1",
+    "ret_5",
+    "smc_bias_4h",
+    "zone_dist_atr",
+    "at_zone",
+    "hilbert_inst_freq"
+  ],
+  "break": [
+    "rsi_4h",
+    "macd_pct_4h",
+    "ema_cross_4h",
+    "atr_pct_4h",
+    "ret_1",
+    "ret_5",
+    "smc_bias_4h",
+    "zone_dist_atr",
+    "at_zone",
+    "zone_delta_pct",
+    "zone_age_bars",
+    "zone_touches",
+    "zone_width_atr",
+    "zone_confluence_count",
+    "htf_alignment",
+    "distance_from_poc_atr",
+    "volume_delta_since_zone",
+    "q6_harmonic_oscillator_energy",
+    "break_target_dist_atr"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "symbol": "BTCUSD",
+  "timeframe": "4H",
+  "cv_brier_score": 0.1912,
+  "cv_brier_skill_score": 0.2352,
+  "cv_folds": [
+    0.1987,
+    0.1878,
+    0.21,
+    0.1745,
+    0.185
+  ],
+  "label_balance": {
+    "0": 0.7365,
+    "1": 0.2635
+  },
+  "n_rows": 4299,
+  "n_features": 9,
+  "features": [
+    "rsi_4h",
+    "macd_pct_4h",
+    "ema_cross_4h",
+    "atr_pct_4h",
+    "ret_1",
+    "ret_5",
+    "smc_bias_4h",
+    "zone_dist_atr",
+    "at_zone"
+  ],
+  "c": 0.1,
+  "trained_at": "2026-06-28T21:18:40.525690"
+}

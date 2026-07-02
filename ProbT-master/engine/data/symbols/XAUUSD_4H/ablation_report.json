@@ -1,0 +1,92 @@
+{
+  "n_events": 839,
+  "steps": {
+    "baseline": {
+      "bounce": {
+        "brier": 0.184004920105394,
+        "bss": -0.016340497814842037,
+        "roc_auc": 0.45178387650085766,
+        "dbss_vs_prev": null
+      },
+      "break": {
+        "brier": 0.24792352450155664,
+        "bss": -0.03301468542315278,
+        "roc_auc": 0.44180770491520455,
+        "dbss_vs_prev": null
+      }
+    },
+    "P": {
+      "bounce": {
+        "brier": 0.18391440014593427,
+        "bss": -0.015840516071925714,
+        "roc_auc": 0.45459691252144085,
+        "dbss_vs_prev": 0.0004999817429163222
+      },
+      "break": {
+        "brier": 0.24920149996936242,
+        "bss": -0.038339583205676764,
+        "roc_auc": 0.43846074219760883,
+        "dbss_vs_prev": -0.005324897782523985
+      }
+    },
+    "Q_signal": {
+      "bounce": {
+        "brier": 0.18231230403177906,
+        "bss": -0.006991431160092487,
+        "roc_auc": 0.4809777015437392,
+        "dbss_vs_prev": 0.008849084911833227
+      },
+      "break": {
+        "brier": 0.24657788312100082,
+        "bss": -0.027407846337503372,
+        "roc_auc": 0.4520297431119852,
+        "dbss_vs_prev": 0.010931736868173392
+      }
+    },
+    "Q_real": {
+      "bounce": {
+        "brier": 0.1838137213620241,
+        "bss": -0.015284422651705931,
+        "roc_auc": 0.47589479702687254,
+        "dbss_vs_prev": -0.008292991491613444
+      },
+      "break": {
+        "brier": 0.2394783028178168,
+        "bss": 0.0021737382590967247,
+        "roc_auc": 0.5354320859858875,
+        "dbss_vs_prev": 0.029581584596600097
+      }
+    },
+    "Z": {
+      "bounce": {
+        "brier": 0.18495211224266053,
+        "bss": -0.021572258616479267,
+        "roc_auc": 0.45241852487135503,
+        "dbss_vs_prev": -0.006287835964773336
+      },
+      "break": {
+        "brier": 0.22998442772358768,
+        "bss": 0.041731551151718005,
+        "roc_auc": 0.6085865120852958,
+        "dbss_vs_prev": 0.03955781289262128
+      }
+    }
+  },
+  "retained": {
+    "bounce": [
+      "hilbert_inst_freq"
+    ],
+    "break": [
+      "zone_delta_pct",
+      "zone_age_bars",
+      "zone_touches",
+      "zone_width_atr",
+      "zone_confluence_count",
+      "htf_alignment",
+      "distance_from_poc_atr",
+      "volume_delta_since_zone",
+      "q6_harmonic_oscillator_energy",
+      "break_target_dist_atr"
+    ]
+  }
+}

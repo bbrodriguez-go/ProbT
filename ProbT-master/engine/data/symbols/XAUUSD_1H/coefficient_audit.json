@@ -1,0 +1,49 @@
+{
+  "bounce": {
+    "coefficients": {
+      "rsi_1h": 0.0,
+      "macd_pct_1h": 0.018654066890105996,
+      "ema_cross_1h": 0.0,
+      "atr_pct_1h": -0.14297762816258,
+      "ret_1": 0.0,
+      "ret_5": 0.0,
+      "entropy_20": 0.0,
+      "smc_bias_1h": 0.0,
+      "zone_dist_atr": 0.01342744576206516,
+      "at_zone": 0.0,
+      "dxy_return_1d": 0.0,
+      "vix_level": 0.0,
+      "tnx_level": 0.0,
+      "hilbert_inst_freq": -0.011329530040936215
+    },
+    "sign_flags": []
+  },
+  "break": {
+    "coefficients": {
+      "rsi_1h": 0.0,
+      "macd_pct_1h": 0.0,
+      "ema_cross_1h": -0.004184626196535752,
+      "atr_pct_1h": -0.17932207627804203,
+      "ret_1": -0.0854405293515726,
+      "ret_5": 0.0,
+      "entropy_20": 0.0,
+      "smc_bias_1h": 0.0,
+      "zone_dist_atr": 0.0,
+      "at_zone": -0.020105538906571536,
+      "dxy_return_1d": 0.0,
+      "vix_level": 0.04192115124576422,
+      "tnx_level": 0.0,
+      "zone_delta_pct": 0.0,
+      "zone_age_bars": 0.0,
+      "zone_touches": 0.0,
+      "zone_width_atr": 0.0,
+      "zone_confluence_count": 0.0,
+      "htf_alignment": -0.009738119473940132,
+      "distance_from_poc_atr": 0.0,
+      "volume_delta_since_zone": 0.001664893991834819,
+      "q6_harmonic_oscillator_energy": 0.0,
+      "break_target_dist_atr": -0.9630847263635139
+    },
+    "sign_flags": []
+  }
+}

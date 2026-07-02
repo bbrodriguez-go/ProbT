@@ -1,0 +1,42 @@
+{
+  "symbol": "XAUUSD",
+  "timeframe": "1H",
+  "cv_brier_score": 0.1852,
+  "cv_brier_skill_score": 0.0142,
+  "cv_folds": [
+    0.1923,
+    0.1604,
+    0.1971,
+    0.212,
+    0.1642
+  ],
+  "brier": 0.1852,
+  "brier_skill_score": 0.0142,
+  "roc_auc": 0.5958,
+  "brier_reference": 0.1879,
+  "label_rate": 0.2508,
+  "label_balance": {
+    "0": 0.7492,
+    "1": 0.2508
+  },
+  "n_rows": 13646,
+  "n_features": 13,
+  "features": [
+    "rsi_1h",
+    "macd_pct_1h",
+    "ema_cross_1h",
+    "atr_pct_1h",
+    "ret_1",
+    "ret_5",
+    "entropy_20",
+    "smc_bias_1h",
+    "zone_dist_atr",
+    "at_zone",
+    "dxy_return_1d",
+    "vix_level",
+    "tnx_level"
+  ],
+  "c": 0.3,
+  "penalty": "l1",
+  "trained_at": "2026-06-30T20:56:50.777194"
+}

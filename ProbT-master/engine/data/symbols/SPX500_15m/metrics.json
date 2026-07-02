@@ -1,0 +1,32 @@
+{
+  "symbol": "SPX500",
+  "timeframe": "15m",
+  "cv_brier_score": 0.2037,
+  "cv_brier_skill_score": 0.1852,
+  "cv_folds": [
+    0.2533,
+    0.2094,
+    0.2018,
+    0.2003,
+    0.1538
+  ],
+  "label_balance": {
+    "0": 0.7342,
+    "1": 0.2658
+  },
+  "n_rows": 1490,
+  "n_features": 9,
+  "features": [
+    "rsi_15m",
+    "macd_pct_15m",
+    "ema_cross_15m",
+    "atr_pct_15m",
+    "ret_1",
+    "ret_5",
+    "smc_bias_15m",
+    "zone_dist_atr",
+    "at_zone"
+  ],
+  "c": 0.1,
+  "trained_at": "2026-06-28T21:35:59.622081"
+}
