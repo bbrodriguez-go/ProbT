@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { SectionCard } from "@/components/layout/section-card";
 import { ZoneReadingCard } from "@/components/cards/zone-reading-card";
 import { ContextCard } from "@/components/cards/context-card";
+import { TrackRecordCard } from "@/components/cards/track-record-card";
 import { SmcChart, SmcLayerToolbar, SupplyDemandWidget, DEFAULT_SMC_LAYERS } from "@/components/charts/smc-chart";
 import type { SmcLayers } from "@/components/charts/smc-chart";
 import { LiveTicker } from "@/components/widgets/live-ticker";
@@ -42,6 +43,9 @@ export default function DashboardPage() {
           </div>
           <div id="section-context">
             <ContextCard />
+          </div>
+          <div id="section-track-record">
+            <TrackRecordCard />
           </div>
         </div>
       </section>

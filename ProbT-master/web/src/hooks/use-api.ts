@@ -4,6 +4,7 @@ import { QueryClient, useQuery, keepPreviousData } from "@tanstack/react-query";
 import type {
   Reading,
   ReadingV2,
+  JournalSummary,
   BacktestResponse,
   Kpi,
   Trade,
@@ -50,6 +51,7 @@ export const qk = {
   health: ["health"] as const,
   reading: (s: string, t: string) => ["reading", s, t] as const,
   readingV2: (s: string, t: string) => ["reading-v2", s, t] as const,
+  journal: (s: string, t: string) => ["journal", s, t] as const,
   backtest: (s: string, t: string) => ["backtest", s, t] as const,
   kpis: (s: string, t: string) => ["kpis", s, t] as const,
   probDist: (s: string, t: string) => ["probability-dist", s, t] as const,
@@ -82,6 +84,15 @@ export const useReadingV2 = () => {
     queryKey: qk.readingV2(symbol, timeframe),
     queryFn: () => fetcher<ReadingV2>(`/api/reading_v2?${pairQuery(symbol, timeframe)}`),
     refetchInterval: 30_000,
+  });
+};
+
+export const useJournal = () => {
+  const { symbol, timeframe } = useAsset();
+  return useQuery({
+    queryKey: qk.journal(symbol, timeframe),
+    queryFn: () => fetcher<JournalSummary>(`/api/journal?${pairQuery(symbol, timeframe)}`),
+    refetchInterval: 300_000,
   });
 };
 

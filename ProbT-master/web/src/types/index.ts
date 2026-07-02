@@ -305,8 +305,16 @@ export interface ReadingV2 {
   asof: string;
   generated_at: string;
   price: number;
+  atr_abs?: number;
   horizon_bars: number;
   calendar_loaded: boolean;
+  /** regime context (gold only): real-yield changes + COT crowding — these
+   *  failed the model gate and are display-context only, never signals */
+  macro_context?: {
+    dfii10_change_1d: number | null;
+    dfii10_change_5d: number | null;
+    cot_mm_net_pctile: number | null;
+  };
   state: "no_signal" | "blackout" | "signal";
   blackout?: { event: string; starts_in_seconds: number };
   note?: string;
@@ -321,5 +329,32 @@ export interface ReadingV2 {
   };
   sizing?: SizingV2 | null;
   news?: NewsOverlay;
+  error?: string;
+}
+
+// ─── live signal track record (/api/journal) ──────────────────────
+
+export interface JournalBlock {
+  n: number;
+  predicted_mean: number;
+  observed_rate: number;
+}
+
+export interface JournalSummary {
+  n_signals: number;
+  n_graded: number;
+  min_n: number;
+  verdict_available: boolean;
+  break?: { overall: JournalBlock } & Record<string, JournalBlock>;
+  bounce_base_rate_check?: JournalBlock;
+  recent?: {
+    asof: string;
+    trigger: string;
+    zone_kind: string;
+    p_break: number | null;
+    outcome_break: number;
+    p_bounce: number | null;
+    outcome_bounce: number;
+  }[];
   error?: string;
 }

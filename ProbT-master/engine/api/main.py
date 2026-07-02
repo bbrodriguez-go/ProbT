@@ -211,9 +211,36 @@ def reading_v2(symbol: str | None = None, timeframe: str | None = None):
             import live_engine_v2
             cache[k] = live_engine_v2.compute_reading_v2(s, t)
             ts[k] = time.time()
+            try:
+                import signal_journal
+                signal_journal.log_reading(cache[k])
+            except Exception as e:  # journal failures never break the reading
+                print(f"[api] journal log failed for {s} {t}: {e}", flush=True)
         except Exception as e:
             print(f"[api] reading_v2 refresh failed for {s} {t}: {e}", flush=True)
     return cache.get(k) or {"error": "reading_v2 not ready", "symbol": s,
+                            "timeframe": t}
+
+
+@app.get("/api/journal")
+def journal(symbol: str | None = None, timeframe: str | None = None):
+    """Live signal track record: grades pending journal rows, then returns
+    predicted-vs-observed calibration on signals logged AFTER training."""
+    s, t = _pair_params(symbol, timeframe)
+    k = (s, t)
+    cache = _CACHE.setdefault("journal", {})
+    ts = _CACHE.setdefault("journal_ts", {})
+    if k not in cache or time.time() - ts.get(k, 0) > 300:
+        try:
+            import signal_journal
+            from feature_engineer import _clean_index
+            from live_engine import _pull_bars
+            signal_journal.grade(s, t, _clean_index(_pull_bars(s, t)))
+            cache[k] = signal_journal.summary(s, t)
+            ts[k] = time.time()
+        except Exception as e:
+            print(f"[api] journal failed for {s} {t}: {e}", flush=True)
+    return cache.get(k) or {"error": "journal not ready", "symbol": s,
                             "timeframe": t}
 
 

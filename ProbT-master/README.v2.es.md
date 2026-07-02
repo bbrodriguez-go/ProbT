@@ -166,6 +166,30 @@ Aplicado tras el informe del Paso 10, a petición del product owner:
   inputs) — dBSS +0,0002…+0,0025, muy por debajo de la puerta de +0,01 en ambos
   timeframes; las features de geometría ya lo codifican. Reportado según G4, no
   adoptado.
+- **Features de sesión/hora del día — probadas, bajo la puerta, no adoptadas.**
+  La codificación cíclica de la hora fue la mejor pista de todo el proyecto: bounce
+  1H dBSS +0,0060 con AUC 0,494→0,544 (lo único que movió el modelo de bounce),
+  break 1H dBSS +0,0073; nada en 4H. Ambas quedan por debajo de la puerta de +0,01
+  que rechazó candidatos más débiles, así que no están en los modelos en vivo —
+  marcadas como el PRIMER re-test cuando los datos de tick amplíen los eventos.
+- **Feeds de posicionamiento macro construidos (`engine/external_data.py`, §6
+  D1+D3):** yields reales DFII10 de FRED (diario, sin key) y posicionamiento COT
+  de managed money en oro de la CFTC (semanal, con retraso de publicación de 4
+  días por causalidad), cacheados en `data/external/` con manifest. Como features
+  de MODELO fallan la puerta en todos los modelos/timeframes (dBSS
+  +0,0001…−0,0054) — registrado en el docstring. Se entregan solo como CONTEXTO DE
+  RÉGIMEN: la tarjeta Regime & News muestra el cambio 1d de yields reales y el
+  percentil de crowding COT, etiquetados "contexto, no señal".
+- **Journal de señales auto-calificado (`engine/signal_journal.py` +
+  `/api/journal` + tarjeta Live Track Record).** Cada lectura SIGNAL en vivo se
+  registra con sus precios de barrera congelados al momento de la señal; al
+  vencer el horizonte se califica contra lo que el precio realmente hizo, y el
+  dashboard reporta predicho-vs-observado ("dijo 45% → ocurrió 41%, n=63") en
+  total y por tercil de probabilidad. Sin backfill del histórico de entrenamiento
+  — solo cuentan señales genuinamente posteriores al entrenamiento — y las tasas
+  se retienen por debajo de 20 señales calificadas. Es el sistema de alerta
+  temprana de deriva de calibración y la base para meta-labeling de las entradas
+  del propio trader.
 
 ## Conclusión
 

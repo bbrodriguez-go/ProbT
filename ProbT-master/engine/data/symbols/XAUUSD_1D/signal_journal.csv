@@ -1,0 +1,2 @@
+asof,generated_at,price,atr_abs,trigger,zone_kind,source,zone_top,zone_bottom,p_bounce,bounce_is_prob,p_break,break_is_prob,payoff_b,bounce_win,bounce_lose,break_win,break_lose,outcome_bounce,outcome_break,graded_at
+2026-07-02 00:00:00,2026-07-02T20:09:37.820363+00:00,4133.9,95.7755,E5,supply,fvg,4223.7,4135.2,,False,,False,0.9688060624656619,3942.3489999999997,4229.675499999999,4319.4755,3942.3489999999997,,,

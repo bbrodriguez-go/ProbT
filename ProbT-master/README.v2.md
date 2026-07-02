@@ -156,6 +156,27 @@ Applied after the Step 10 report, at the product owner's request:
 - **Tested and rejected:** event-type dummy features (E1/E2 vs E4 vs E5 as inputs)
   — ΔBSS +0.0002…+0.0025, far below the +0.01 gate on both TFs; the geometry
   features already encode it. Reported per G4, not adopted.
+- **Session/time-of-day features — tested, sub-gate, not adopted.** Cyclic
+  hour-of-day encoding was the strongest lead all project: 1H bounce ΔBSS +0.0060
+  with AUC 0.494→0.544 (the only thing that ever moved the bounce model), 1H break
+  ΔBSS +0.0073; nothing on 4H. Both fall short of the +0.01 gate that rejected
+  weaker candidates, so they are not in the live models — flagged as the FIRST
+  re-test when tick data expands the event count.
+- **Macro positioning feeds built (`engine/external_data.py`, §6 D1+D3):** FRED
+  DFII10 real yields (daily, keyless) and CFTC COT managed-money gold positioning
+  (weekly, publication-lagged 4 days for causality), cached under `data/external/`
+  with a manifest. As MODEL features they fail the gate on every model/timeframe
+  (ΔBSS +0.0001…−0.0054) — recorded in the module docstring. They ship as REGIME
+  CONTEXT only: the dashboard's Regime & News card shows real-yields 1d change and
+  COT crowding percentile, labeled "context, not signal".
+- **Self-grading signal journal (`engine/signal_journal.py` + `/api/journal` +
+  the Live Track Record card).** Every live SIGNAL reading is journaled with its
+  barrier prices frozen at signal time; once the horizon elapses it is graded
+  against what price actually did, and the dashboard reports predicted-vs-observed
+  ("said 45% → got 41%, n=63") overall and by probability tercile. No backfilling
+  from training history — only genuinely post-training signals count — and rates
+  are withheld below 20 graded signals. This is the earliest-warning system for
+  calibration drift and the foundation for meta-labeling the trader's own entries.
 
 probt v2 does what a serious probability engine is supposed to do: it found one
 well-calibrated, regime-stable signal (zone breaks), proved that most of its strength is

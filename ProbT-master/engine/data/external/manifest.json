@@ -1,0 +1,12 @@
+{
+  "cot_gold": {
+    "fetched_at": "2026-07-02T19:42:09.609839+00:00",
+    "rows": 1046,
+    "source": "https://publicreporting.cftc.gov/resource/72hh-3qpy.json?cftc_contract_market_code=088691&$select=report_date_as_yyyy_mm_dd,m_money_positions_long_all,m_money_positions_short_all,open_interest_all&$order=report_date_as_yyyy_mm_dd&$limit=10000"
+  },
+  "dfii10": {
+    "fetched_at": "2026-07-02T19:57:15.845801+00:00",
+    "rows": 5877,
+    "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFII10"
+  }
+}

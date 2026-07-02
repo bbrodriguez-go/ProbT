@@ -226,15 +226,28 @@ def compute_reading_v2(symbol: str, timeframe: str) -> dict[str, Any]:
     horizon = tf_horizon(timeframe)
     now = datetime.now(timezone.utc)
 
+    import indicators
+    from symbols import symbol_has_macro
+
     bars = _pull_bars(symbol, timeframe).tail(LIVE_WINDOW)
+    atr_abs = float(indicators.atr(bars[["high", "low", "close"]], 14).iloc[-1])
     base = {
         "symbol": symbol, "symbol_name": symbol_name(symbol),
         "timeframe": timeframe, "asof": str(bars.index[-1]),
         "generated_at": now.isoformat(),
         "price": round(float(bars["close"].iloc[-1]), 2),
+        "atr_abs": round(atr_abs, 4),
         "horizon_bars": horizon,
         "calendar_loaded": os.path.exists(CALENDAR_PATH),
     }
+    if symbol_has_macro(symbol):
+        # regime CONTEXT only — these failed the model gate (external_data
+        # docstring) and are displayed as context, never as signals
+        import external_data
+        mc = external_data.macro_positioning_features(bars.index[-1:]).iloc[0]
+        base["macro_context"] = {
+            k: (None if pd.isna(v) else round(float(v), 4))
+            for k, v in mc.items()}
 
     bl = is_blackout_window(now)
     if bl:
